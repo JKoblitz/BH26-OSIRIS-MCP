@@ -20,6 +20,7 @@ bibliography: paper.bib
 authors_short: Koblitz et al. (2026) OSIRIS MCP
 group: BioHackrXiv
 event: DBCLS BioHackathon 2026
+biohackathon_name: DBCLS BioHackathon 2026
 ---
 
 # Abstract
