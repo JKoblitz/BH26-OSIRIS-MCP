@@ -1,5 +1,6 @@
 ---
-title: 'OSIRIS MCP: Towards secure conversational access to research information in OSIRIS'
+title: 'OSIRIS-MCP: Towards secure conversational access to research information in OSIRIS'
+title_short: 'OSIRIS-MCP'
 tags:
   - research information systems
   - Model Context Protocol
@@ -10,17 +11,19 @@ authors:
   - name: Julia Koblitz
     orcid: 0000-0002-7260-2129
     affiliation: 1
-
+    role: Conceptualization, Software, Writing – original draft, Validation
 affiliations:
   - name: OSIRIS Solutions GmbH, Helmstedt, Germany
     index: 1
-
 date: 18 September 2026
-bibliography: paper.bib
+cito-bibliography: paper.bib
+event: BH26JP
+biohackathon_name: "DBCLS BioHackathon 2026"
+biohackathon_url: "https://2026.biohackathon.org/"
+biohackathon_location: "Matsuyama, Japan"
+group: OSIRIS-MCP
+git_url: https://github.com/JKoblitz/BH26-OSIRIS-MCP
 authors_short: Koblitz et al. (2026) OSIRIS MCP
-group: BioHackrXiv
-event: DBCLS BioHackathon 2026
-biohackathon_name: DBCLS BioHackathon 2026
 ---
 
 # Abstract
