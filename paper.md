@@ -12,9 +12,15 @@ authors:
     orcid: 0000-0002-7260-2129
     affiliation: 1
     role: Conceptualization, Software, Writing – original draft, Validation
+  - name: Akira R. Kinjo
+    orcid: 0000-0002-4006-8208
+    affiliation: 2
+    role: Writing - review & editing
 affiliations:
   - name: OSIRIS Solutions GmbH, Helmstedt, Germany
     index: 1
+  - name: Anima Machina G.K., Osaka, Japan
+    index: 2
 date: 18 September 2026
 cito-bibliography: paper.bib
 event: BH26JP
