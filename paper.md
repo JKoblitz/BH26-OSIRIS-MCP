@@ -61,15 +61,13 @@ The prototype was guided by five objectives:
 
 In addition, the project aimed to replace reliance on one global OSIRIS API key with a reusable client-registration mechanism that benefits MCP and other present or future integrations.
 
-The work did not aim to provide unrestricted natural-language access to the underlying database. It also did not attempt to evaluate answer quality on real institutional data during the BioHackathon as we did not have access to it.
+The work did not aim to provide unrestricted natural-language access to the underlying database. It also did not attempt to evaluate answer quality on real institutional data during the BioHackathon to protect sensitive information and comply with institutional privacy policies.
 
 # Implementation
 
 ## Architecture
 
-The implementation separates the existing PHP application from a standalone
-Python MCP server. OSIRIS exposes dedicated read-only HTTP routes under
-`/api/mcp`. The connector translates typed MCP tool calls into requests to these routes and validates the returned data before presenting it to the MCP client. It has no generic database or unrestricted proxy tool.
+The implementation separates the existing OSIRIS PHP application from a standalone Python MCP server. OSIRIS exposes dedicated read-only HTTP routes under `/api/mcp`. The connector translates typed MCP tool calls into requests to these routes and validates the returned data before presenting it to the MCP client. It has no generic database or unrestricted proxy tool.
 
 Table 1: Responsibilities of the components in the OSIRIS MCP architecture.
 | Component | Primary responsibilities |
@@ -77,36 +75,55 @@ Table 1: Responsibilities of the components in the OSIRIS MCP architecture.
 | MCP host and client | User interaction, model invocation, consent, and tool orchestration |
 | OSIRIS MCP connector | Typed tools, input validation, compact responses, pagination, and inbound authentication |
 | OSIRIS MCP API | Query construction, field allowlists, API-client permissions, and request logging |
-| OSIRIS database | Authoritative institutional research information |
+| OSIRIS | Authoritative institutional research information |
 | Identity provider | User authentication and OAuth token issuance when OAuth mode is enabled |
 
-The prototype exposes twelve read-only tools. Discovery tools describe the
-OSIRIS instance and enumerate valid organisational units, research topics, and activity types. Search and detail tools cover projects, activities, people, and expertise. Separating identity search from expertise search prevents general biographies or account metadata from being treated as evidence of research expertise.
+The prototype exposes twelve read-only tools. Discovery tools describe the OSIRIS instance and enumerate valid organisational units, research topics, and activity types. Search and detail tools cover projects, activities, people, and expertise. Separating identity search from expertise search prevents general biographies or account metadata from being treated as evidence of research expertise.
+
+Table 2: Read-only tools exposed by the OSIRIS MCP prototype.
+
+| Category | Tool | Purpose |
+| --- | --- | --- |
+| Server metadata | `server_info` | Report the connector version, licence, source-code location, and non-sensitive connection status. |
+| Instance discovery | `get_instance_info` | Describe the connected OSIRIS installation, enabled features, available catalogues, and supported filters. |
+| Instance discovery | `list_units` | Resolve organisational names or acronyms to exact local unit identifiers and hierarchy information. |
+| Instance discovery | `list_topics` | Resolve research topic names to exact local identifiers and report whether a topic catalog is available. |
+| Instance discovery | `list_activity_types` | Enumerate the exact activity category and subtype identifiers configured by the installation. |
+| Activities | `search_activities` | Retrieve a filtered, paginated list of compact activity evidence using start, end, or period-overlap semantics. |
+| Activities | `get_activity` | Retrieve the compact, citation-centred representation of one activity by its exact identifier. |
+| People | `search_people` | Resolve a name, username, alias, or ORCID to an exact person identifier, optionally within a current unit. |
+| People | `get_person` | Retrieve an allowlisted research profile for one exact person identifier. |
+| People | `search_experts` | Find active researchers by expertise-related evidence and state which evidence produced each match. |
+| Projects | `search_projects` | Retrieve projects using text, date, status, topic, or organisational-unit filters with pagination. |
+| Projects | `get_project` | Retrieve the allowlisted details of one project by its exact identifier. |
 
 ![Architecture and trust boundaries of OSIRIS MCP. The language-model client communicates only with the read-only connector. OSIRIS retains responsibility for permissions, query construction, and access to the authoritative database.](./figure1.png)
+
+The MCP prototype is currently limited to access to staff, activities, and projects. Other types of institutional data may require additional tools or permissions that are not yet implemented but could be added in future versions.
 
 
 ## Data minimisation and evidence
 
-OSIRIS activity documents may contain extensive editing history, workflow state, external metadata, formatted HTML, and type-specific fields. Returning complete documents would consume context unnecessarily and increase the risk of disclosing irrelevant information. The MCP API therefore projects activities into a shared compact representation containing the identifier, type and subtype, title, start and end dates, linked people and units, a plain-text citation rendered by OSIRIS, selected persistent identifiers, affiliation and publication status, optional bibliometric values, and a source URL.
+OSIRIS activity documents may contain extensive editing history, workflow state, external metadata, formatted HTML, and type-specific fields. Returning complete documents would consume context unnecessarily and increase the risk of disclosing irrelevant or privacy-sensitive information. The MCP API therefore projects activities into a shared compact representation containing the identifier, type and subtype, title, start and end dates, linked people and units, a plain-text citation rendered by OSIRIS, selected persistent identifiers, affiliation and publication status, optional bibliometric values, and a source URL.
 
-Person results omit email addresses, telephone numbers, gender, login history, internal identifiers, account roles, and user-interface settings. Expertise results include the field that produced a match so that the language model can distinguish curated expertise, research interests, profiles, local research topics, and lower-priority publication-derived evidence. Where enabled,
-OpenAlex topics can enrich this discovery process; OpenAlex provides an open index of scholarly works and related entities [@Priem:2022].
+Person results omit email addresses, telephone numbers, gender, login history, internal identifiers, account roles, and user-interface settings. Expertise results include the field that produced a match so that the language model can distinguish curated expertise, research interests, profiles, local research topics, and lower-priority publication-derived evidence. Where enabled, OpenAlex topics can enrich this discovery process; OpenAlex provides an open index of scholarly works and related entities [@Priem:2022].
 
 ![Processing an institutional question through OSIRIS MCP. Instance-specific discovery and typed filters precede the search. Only allowlisted, compact evidence bundles are returned, while verbose or sensitive source fields remain inside OSIRIS.](./figure2.png)
 
 
-These choices follow the general FAIR motivation of enabling machine-actionable discovery and reuse [@Wilkinson:2016], but they deliberately do not imply that all underlying institutional information should be openly accessible. The API instead exposes only the information necessary for an authorised task.
+These choices follow the general FAIR motivation of enabling machine-actionable discovery and reuse [@Wilkinson:2016], but they deliberately do not imply that all underlying institutional information should be accessible. The API instead exposes only the information necessary for an authorised task.
 
 ## Instance discovery and query semantics
 
 Because OSIRIS installations can define different units, topics, activity types, and feature sets, the connector exposes these values through discovery tools and MCP resources. Clients can resolve human-readable terms to exact instance-specific identifiers before executing a search. Organisational-unit resolution includes current direct assignments and inferred parent units.
 
-Date semantics are explicit. Activity searches select whether a period applies to `start_date` or `end_date`. This distinction is essential for long-running activities: a query for doctoral theses completed in the last three years must filter by their end dates rather than by when they began. Project searches can instead select projects active on a given date. Search endpoints return bounded pages with total counts and continuation offsets, allowing complete result sets without placing an unbounded response into a single model context.
+Date semantics are explicit. Activity searches select whether a period applies to `start_date`, `end_date`, or overlaps the activity's duration. This distinction is essential for long-running activities: a query for doctoral theses completed in the last three years must filter by their end dates rather than by when they began, whereas a query for training activities running during a period must include activities that began earlier or ended later. Project searches can instead select projects active on a given date. Search endpoints return bounded pages with total counts and continuation offsets, allowing complete result sets without placing an unbounded response into a single model context.
 
 ## Security model
 
 As part of the BioHackathon work, OSIRIS was extended with a general API-client registry. Administrators can create separate credentials for individual applications, store only hashed client secrets, disable a compromised client without affecting other integrations, and explicitly assign API areas and permissions. The MCP connector is assigned only the MCP API area and the read permissions required by its enabled tools. The legacy global API key remains supported for compatibility but can be removed by installations that use only registered API clients. Public portfolio visibility is intentionally not reused as an access-control decision for internal reporting: MCP access is governed by its own API-client permissions.
+
+Read-only access was a deliberate design decision rather than only a limitation of the prototype. The targeted reporting, discovery, and communication tasks require retrieval and synthesis but do not require the language model to modify the authoritative research record. Natural-language requests can be ambiguous, model-generated tool calls can be incorrect, and retrieved or user-supplied text may influence subsequent tool selection. Allowing the same integration to create or update records would therefore increase the potential impact of mistakes or malicious instructions without being necessary for the primary use cases. Restricting both the connector and its OSIRIS API client to read operations limits this impact and leaves validation, approval, and data stewardship within the established OSIRIS workflows. Any future write capability should consequently be introduced as separately permissioned, narrowly scoped operations with explicit human confirmation, validation, and audit trails.
 
 For inbound access, the connector supports two modes. A static API key provides a simple option for controlled internal deployments. OAuth mode delegates login and token issuance to an external identity provider and validates access tokens using OAuth 2.0 token introspection [@Richer:2015]. The server publishes OAuth protected-resource metadata as specified by RFC 9728 [@Jones:2025], enabling compatible clients to discover the authorisation server. The access token used between an MCP client and the connector is never forwarded to OSIRIS; the connector uses its own restricted OSIRIS API identity.
 
@@ -114,27 +131,25 @@ Each OSIRIS MCP API request receives a request identifier. Expected validation e
 
 ## Packaging and deployment
 
-The connector can run locally through standard input/output or as a persistent
-Streamable HTTP service. A Docker image provides the latter mode without requiring a local Python installation. The image runs as an unprivileged user with a read-only filesystem, removed Linux capabilities, and
-`no-new-privileges`. A local development overlay was created for testing OAuth with Keycloak and a host-based OSIRIS instance. The connector is licensed under AGPL-3.0-or-later.
+The connector can run locally through standard input/output or as a persistent Streamable HTTP service. A Docker image provides the latter mode without requiring a local Python installation. The image runs as an unprivileged user with a read-only filesystem, removed Linux capabilities, and `no-new-privileges`. A local development overlay was created for testing OAuth with Keycloak and a host-based OSIRIS instance. The connector is also distributed through the Python Package Index (PyPI) as `osiris-mcp`, enabling direct installation or isolated execution with `uvx`. Releases are published from the source repository using PyPI Trusted Publishing. The connector is licensed under AGPL-3.0-or-later.
 
 # Results
 
 During the BioHackathon, the general API-client registry, dedicated OSIRIS MCP routes, and the standalone MCP connector were implemented. The registry is an OSIRIS Core feature rather than an MCP-specific workaround and can therefore be used to isolate and permission other integrations as well. The MCP routes and tools cover instance metadata, units, topics, activity types, activities, projects, people, and expertise. The prototype was tested against a local OSIRIS server containing synthetic data. Automated connector tests covered request construction, response minimisation, pagination, authentication, metadata discovery, and error handling. PHP syntax checks and direct endpoint tests were used for the corresponding OSIRIS routes.
 
-Interactive tests were performed with MCP Inspector and a general-purpose language-model client. Example tasks included summarising publications in a time period, finding researchers working on artificial intelligence or climate change, enumerating current projects, and counting completed doctoral theses.
-These tests exposed several domain-specific requirements that were incorporated into the implementation:
+Interactive tests were performed with MCP Inspector and a general-purpose language-model client. Example tasks included summarising publications in a time period, finding researchers working on artificial intelligence or climate change, enumerating current projects, and counting completed doctoral theses. These tests exposed several domain-specific requirements that were incorporated into the implementation:
 
 * activity type and subtype identifiers must be discovered rather than guessed;
 * organisational membership must include current inferred parent units;
 * searches should include only affiliated activities by default;
 * Online-ahead-of-print records should be excluded unless explicitly requested;
-* start-date and end-date filters must have distinct semantics; and
+* start-date, end-date, and period-overlap filters must have distinct semantics; and
 * exhaustive questions require explicit, machine-readable pagination.
 
-OAuth login was validated end to end using Keycloak, the Dockerised connector, and MCP Inspector. The final test covered authorisation-server discovery, user login, access-token introspection, MCP initialisation, tool discovery, and an  authenticated activity search. Static API-key authentication was also covered  by automated tests.
+OAuth login was validated end to end using Keycloak, the Dockerised connector, and MCP Inspector. The final test covered authorisation-server discovery, user login, access-token introspection, MCP initialisation, tool discovery, and an authenticated activity search. Static API-key authentication was also covered by automated tests.
 
 The work constitutes a functional prototype rather than a quantitative user study. No production OSIRIS data were made available to a language model during the BioHackathon.
+
 
 # Discussion
 
@@ -144,15 +159,14 @@ The API-client registry is a broader outcome of the project. It replaces a singl
 
 The development process also showed that seemingly simple natural-language questions encode important domain assumptions. “Completed in the last three years” refers to an end date, whereas “started this year” refers to a start date. A person assigned to a research group may implicitly belong to its parent department and institute. A request for “all” results requires pagination rather than a larger arbitrary limit. Encoding these assumptions in tool schemas and server-side logic is more reliable than expecting a language model to infer undocumented database conventions.
 
-The current prototype has several limitations. It was evaluated only with synthetic data from one configurable OSIRIS installation. Tool-use behaviour was explored qualitatively rather than through a predefined question set with reference answers. OAuth was tested in a local environment; a production deployment still requires TLS, proxy and network configuration, secret management, rate limiting, operational monitoring, and institutional approval.
-The connector reduces the accessible surface but does not eliminate risks such as inappropriate user questions, misleading synthesis, or inference from authorised data.
+The current prototype has several limitations. It was evaluated only with synthetic data from one configurable OSIRIS installation. Tool-use behaviour was explored qualitatively rather than through a predefined question set with reference answers. OAuth was tested in a local environment; a production deployment still requires TLS, proxy and network configuration, secret management, rate limiting, operational monitoring, and institutional approval. The connector reduces the accessible surface but does not eliminate risks such as inappropriate user questions, misleading synthesis, or inference from authorised data. 
+
 
 # Future work
 
-The next phase will evaluate the connector with authorised real-world OSIRIS installations and a curated benchmark of reporting and communication questions.
-Expected answers should be prepared independently so that retrieval completeness, filter selection, citation fidelity, pagination behaviour, and unsupported claims can be assessed across MCP clients and language models.
+The next phase will evaluate the connector with authorised real-world OSIRIS installations and a curated benchmark of reporting and communication questions. While this is an important step, the authors are currently sceptical that institutions will readily provide access to such data for this purpose. Expected answers should be prepared independently so that retrieval completeness, filter selection, citation fidelity, pagination behaviour, and unsupported claims can be assessed across MCP clients and language models.
 
-A structured security review should document assets, trust boundaries, threat actors, and abuse cases. Production guidance should cover identity-provider configuration, least-privilege scopes, TLS termination, audit retention, rate limits, secret rotation, and incident response. Additional work may include fine-grained permissions for data categories, improved provenance in generated texts, multilingual output evaluation, and optional semantic search without weakening the evidence returned for each match.
+Additional work may include fine-grained permissions for data categories, improved provenance in generated texts, multilingual output evaluation, and optional semantic search without weakening the evidence returned for each match.
 
 # Software and data availability
 
@@ -160,12 +174,12 @@ A structured security review should document assets, trust boundaries, threat ac
 * OSIRIS project website: <https://osiris-app.de/>
 * OSIRIS documentation: <https://wiki.osiris-app.de/>
 * OSIRIS MCP connector: <https://github.com/OSIRIS-Solutions/osiris-mcp>
+* OSIRIS MCP Python package: <https://pypi.org/project/osiris-mcp/>
 * Prototype test data were synthetic and are not research data.
 
 # Acknowledgements
 
-This work was initiated and substantially developed at the DBCLS BioHackathon
-2026 in Matsuyama, Japan. We thank the BioHackathon organisers and participants for the collaborative environment and discussions. We also thank colleagues who contributed reporting use cases, in particular Dominic Koblitz who provided valuable feedback and testing support.
+This work was initiated and substantially developed at the DBCLS BioHackathon 2026 in Matsuyama, Japan. We thank the BioHackathon organisers and participants for the collaborative environment and discussions. We also thank colleagues who contributed reporting use cases, in particular Dominic Koblitz who provided valuable feedback and testing support.
 
 # Generative AI usage statement
 
