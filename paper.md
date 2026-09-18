@@ -26,9 +26,9 @@ cito-bibliography: paper.bib
 event: BH26JP
 biohackathon_name: "DBCLS BioHackathon 2026"
 biohackathon_url: "https://2026.biohackathon.org/"
-biohackathon_location: "Matsuyama, Japan"
+biohackathon_location: "Matsuyama, Japan, 2026"
 group: OSIRIS-MCP
-git_url: https://github.com/JKoblitz/BH26-OSIRIS-MCP
+git_url: https://github.com/biohackathon-japan/BH26-OSIRIS-MCP
 authors_short: Koblitz & Kinjo (2026) OSIRIS MCP
 ---
 
@@ -42,13 +42,13 @@ Evaluation with real institutional data and deployment guidance remain  necessar
 
 # Introduction
 
-Current research information systems (CRIS) aggregate information required for institutional reporting, research management, discovery, and public communication [@Biesenbender:2019]. The resulting data are valuable beyond the interfaces through which they were originally entered. Typical questions include which projects are active in a reporting period, which researchers work on a given topic, which doctoral theses were completed during the last three years, or which recent publications should be highlighted in a report. Although these questions can often be answered from structured data, translating them into system-specific filters and synthesising the returned records remains a manual task.
+Current research information systems (CRIS) aggregate information required for institutional reporting, research management, discovery, and public communication [@citesForInformation:Biesenbender2019]. The resulting data are valuable beyond the interfaces through which they were originally entered. Typical questions include which projects are active in a reporting period, which researchers work on a given topic, which doctoral theses were completed during the last three years, or which recent publications should be highlighted in a report. Although these questions can often be answered from structured data, translating them into system-specific filters and synthesising the returned records remains a manual task.
 
-OSIRIS is an open-source research information system designed to connect people, organisational units, projects, publications, and heterogeneous research activities [@OSIRIS:2026]. Its configurable data model supports local institutional practices, but this flexibility also means that identifiers for activity types, organisational units, and research topics can differ between installations. A language-model integration must therefore discover the local configuration rather than assume a universal vocabulary.
+OSIRIS is an open-source research information system designed to connect people, organisational units, projects, publications, and heterogeneous research activities [@citesAsSourceDocument:OSIRIS2026]. Its configurable data model supports local institutional practices, but this flexibility also means that identifiers for activity types, organisational units, and research topics can differ between installations. A language-model integration must therefore discover the local configuration rather than assume a universal vocabulary.
 
-The Model Context Protocol (MCP) defines a client-host-server architecture in which specialised servers expose tools and contextual resources to language model applications [@MCP:2025]. This architecture provides a suitable boundary between a conversational interface and a research information system: the MCP server can offer a small, explicit set of operations while the existing system retains responsibility for its data and permissions. Such a boundary is particularly important for institutional research information, where internal reporting data must not be conflated with records selected for public display.
+The Model Context Protocol (MCP) defines a client-host-server architecture in which specialised servers expose tools and contextual resources to language model applications [@usesMethodIn:MCP2025]. This architecture provides a suitable boundary between a conversational interface and a research information system: the MCP server can offer a small, explicit set of operations while the existing system retains responsibility for its data and permissions. Such a boundary is particularly important for institutional research information, where internal reporting data must not be conflated with records selected for public display.
 
-At the DBCLS BioHackathon 2026, whose themes included database interoperability, FAIR knowledge graphs, and the combination of curated data with large language models [@DBCLS:2026], we developed an initial OSIRIS MCP connector. BioHackathons provide an intensive setting for interdisciplinary software development and rapid feedback [@Garcia:2020]. The goal of this project was to explore both the usefulness and the security requirements of language-model access to institutional research information.
+At the DBCLS BioHackathon 2026, whose themes included database interoperability, FAIR knowledge graphs, and the combination of curated data with large language models [@citesForInformation:DBCLS2026], we developed an initial OSIRIS MCP connector. BioHackathons provide an intensive setting for interdisciplinary software development and rapid feedback [@citesAsEvidence:Garcia2020]. The goal of this project was to explore both the usefulness and the security requirements of language-model access to institutional research information.
 
 # Objectives
 
@@ -70,7 +70,7 @@ The work did not aim to provide unrestricted natural-language access to the unde
 
 The implementation separates the existing OSIRIS PHP application from a standalone Python MCP server. OSIRIS exposes dedicated read-only HTTP routes under `/api/mcp`. The connector translates typed MCP tool calls into requests to these routes and validates the returned data before presenting it to the MCP client. It has no generic database or unrestricted proxy tool.
 
-Table 1: Responsibilities of the components in the OSIRIS MCP architecture.
+Table: Responsibilities of the components in the OSIRIS MCP architecture.
 | Component | Primary responsibilities |
 | --- | --- |
 | MCP host and client | User interaction, model invocation, consent, and tool orchestration |
@@ -81,7 +81,7 @@ Table 1: Responsibilities of the components in the OSIRIS MCP architecture.
 
 The prototype exposes twelve read-only tools. Discovery tools describe the OSIRIS instance and enumerate valid organisational units, research topics, and activity types. Search and detail tools cover projects, activities, people, and expertise. Separating identity search from expertise search prevents general biographies or account metadata from being treated as evidence of research expertise.
 
-Table 2: Read-only tools exposed by the OSIRIS MCP prototype.
+Table: Read-only tools exposed by the OSIRIS MCP prototype.
 
 | Category | Tool | Purpose |
 | --- | --- | --- |
@@ -107,12 +107,12 @@ The MCP prototype is currently limited to access to staff, activities, and proje
 
 OSIRIS activity documents may contain extensive editing history, workflow state, external metadata, formatted HTML, and type-specific fields. Returning complete documents would consume context unnecessarily and increase the risk of disclosing irrelevant or privacy-sensitive information. The MCP API therefore projects activities into a shared compact representation containing the identifier, type and subtype, title, start and end dates, linked people and units, a plain-text citation rendered by OSIRIS, selected persistent identifiers, affiliation and publication status, optional bibliometric values, and a source URL.
 
-Person results omit email addresses, telephone numbers, gender, login history, internal identifiers, account roles, and user-interface settings. Expertise results include the field that produced a match so that the language model can distinguish curated expertise, research interests, profiles, local research topics, and lower-priority publication-derived evidence. Where enabled, OpenAlex topics can enrich this discovery process; OpenAlex provides an open index of scholarly works and related entities [@Priem:2022].
+Person results omit email addresses, telephone numbers, gender, login history, internal identifiers, account roles, and user-interface settings. Expertise results include the field that produced a match so that the language model can distinguish curated expertise, research interests, profiles, local research topics, and lower-priority publication-derived evidence. Where enabled, OpenAlex topics can enrich this discovery process; OpenAlex provides an open index of scholarly works and related entities [@citesAsAuthority:Priem2022].
 
 ![Processing an institutional question through OSIRIS MCP. Instance-specific discovery and typed filters precede the search. Only allowlisted, compact evidence bundles are returned, while verbose or sensitive source fields remain inside OSIRIS.](./figure2.png)
 
 
-These choices follow the general FAIR motivation of enabling machine-actionable discovery and reuse [@Wilkinson:2016], but they deliberately do not imply that all underlying institutional information should be accessible. The API instead exposes only the information necessary for an authorised task.
+These choices follow the general FAIR motivation of enabling machine-actionable discovery and reuse [@citesAsAuthority:Wilkinson2016], but they deliberately do not imply that all underlying institutional information should be accessible. The API instead exposes only the information necessary for an authorised task.
 
 ## Instance discovery and query semantics
 
@@ -126,7 +126,7 @@ As part of the BioHackathon work, OSIRIS was extended with a general API-client 
 
 Read-only access was a deliberate design decision rather than only a limitation of the prototype. The targeted reporting, discovery, and communication tasks require retrieval and synthesis but do not require the language model to modify the authoritative research record. Natural-language requests can be ambiguous, model-generated tool calls can be incorrect, and retrieved or user-supplied text may influence subsequent tool selection. Allowing the same integration to create or update records would therefore increase the potential impact of mistakes or malicious instructions without being necessary for the primary use cases. Restricting both the connector and its OSIRIS API client to read operations limits this impact and leaves validation, approval, and data stewardship within the established OSIRIS workflows. Any future write capability should consequently be introduced as separately permissioned, narrowly scoped operations with explicit human confirmation, validation, and audit trails.
 
-For inbound access, the connector supports two modes. A static API key provides a simple option for controlled internal deployments. OAuth mode delegates login and token issuance to an external identity provider and validates access tokens using OAuth 2.0 token introspection [@Richer:2015]. The server publishes OAuth protected-resource metadata as specified by RFC 9728 [@Jones:2025], enabling compatible clients to discover the authorisation server. The access token used between an MCP client and the connector is never forwarded to OSIRIS; the connector uses its own restricted OSIRIS API identity.
+For inbound access, the connector supports two modes. A static API key provides a simple option for controlled internal deployments. OAuth mode delegates login and token issuance to an external identity provider and validates access tokens using OAuth 2.0 token introspection [@usesMethodIn:Richer2015]. The server publishes OAuth protected-resource metadata as specified by RFC 9728 [@usesMethodIn:Jones2025], enabling compatible clients to discover the authorisation server. The access token used between an MCP client and the connector is never forwarded to OSIRIS; the connector uses its own restricted OSIRIS API identity.
 
 Each OSIRIS MCP API request receives a request identifier. Expected validation errors remain machine-readable, while unexpected internal errors are logged with that identifier and returned to the client without stack traces, database messages, or source paths. Query parameters that may contain names or research questions are excluded from routine connector logs.
 
@@ -153,7 +153,7 @@ A structured demonstration was conducted on 18 September 2026 using Claude for M
 
 Four additional prompts probed the system boundaries. Requests for contact details, demographic attributes, account information, and login history did not disclose those fields because they are absent from the MCP person projection. A request to create and assign a project was declined because no write-capable tool exists. Retrieval of a plausible but non-existent activity identifier returned a safe not-found error with a request identifier, after which the client refrained from inventing the requested record. An expertise search with no matches was reported as an absence of documented evidence rather than evidence that the expertise could not exist.
 
-The demonstration also illustrates why technical safeguards do not by themselves guarantee completely grounded prose. Although no protected fields or invented activity details were returned, the model occasionally added plausible explanations that were not established by the tool output, including speculation about why an activity was unavailable and an over-broad characterisation of the underlying OSIRIS data model. The allowlisted API and read-only tool surface constrained what the client could retrieve or change, but interpretation of returned evidence still requires critical review. The complete sanitised conversation, including prompts, tool names, parameters, selected tool results, and model responses, is provided as [Supplementary File S1](https://github.com/JKoblitz/BH26-OSIRIS-MCP/blob/main/claude-test.md).
+The demonstration also illustrates why technical safeguards do not by themselves guarantee completely grounded prose. Although no protected fields or invented activity details were returned, the model occasionally added plausible explanations that were not established by the tool output, including speculation about why an activity was unavailable and an over-broad characterisation of the underlying OSIRIS data model. The allowlisted API and read-only tool surface constrained what the client could retrieve or change, but interpretation of returned evidence still requires critical review. The complete sanitised conversation, including prompts, tool names, parameters, selected tool results, and model responses, is provided as [Supplementary File S1](https://github.com/biohackathon-japan/BH26-OSIRIS-MCP/blob/main/claude-test.md).
 
 OAuth login was validated end to end using Keycloak, the Dockerised connector, and MCP Inspector. The final test covered authorisation-server discovery, user login, access-token introspection, MCP initialisation, tool discovery, and an authenticated activity search. Static API-key authentication was also covered by automated tests.
 
@@ -184,7 +184,7 @@ Additional work may include fine-grained permissions for data categories, improv
 * OSIRIS documentation: <https://wiki.osiris-app.de/>
 * OSIRIS MCP connector: <https://github.com/OSIRIS-Solutions/osiris-mcp>
 * OSIRIS MCP Python package: <https://pypi.org/project/osiris-mcp/>
-* Sanitised qualitative test transcript (Supplementary File S1): <https://github.com/JKoblitz/BH26-OSIRIS-MCP/blob/main/claude-test.md>
+* Sanitised qualitative test transcript (Supplementary File S1): <https://github.com/biohackathon-japan/BH26-OSIRIS-MCP/blob/main/claude-test.md>
 * Prototype test data were synthetic and are not research data.
 
 # Acknowledgements
