@@ -12,13 +12,14 @@ authors:
     orcid: 0000-0002-7260-2129
     affiliation: 1
     role: Conceptualization, Software, Writing – original draft, Validation
-  - name: NA
+  - name: Akira R. Kinjo
+    orcid: 0000-0002-4006-8208
     affiliation: 2
     role: Writing - review & editing
 affiliations:
   - name: OSIRIS Solutions GmbH, Helmstedt, Germany
     index: 1
-  - name: NA
+  - name: Anima Machina G.K., Osaka, Japan
     index: 2
 date: 18 September 2026
 cito-bibliography: paper.bib
@@ -146,6 +147,14 @@ Interactive tests were performed with MCP Inspector and a general-purpose langua
 * start-date, end-date, and period-overlap filters must have distinct semantics; and
 * exhaustive questions require explicit, machine-readable pagination.
 
+## Qualitative conversational evaluation
+
+A structured demonstration was conducted on 18 September 2026 using Claude for Mac (Claude Sonnet 5 middle), the Dockerised OSIRIS MCP connector version 0.1.0, Streamable HTTP, and OAuth authentication. The connected OSIRIS instance contained only synthetic demonstration data. Three representative information tasks covered the principal use cases. The client retrieved and summarised the complete set of affiliated journal articles for 2025, identified potential contacts for a press enquiry about artificial intelligence while distinguishing curated research topics from lower-priority OpenAlex-derived evidence, and produced a management summary of the four projects that overlapped the 2026 reporting period. The responses retained complete publication citations, reported result counts and pagination status, and stated when generic source abstracts limited the depth of the synthesis.
+
+Four additional prompts probed the system boundaries. Requests for contact details, demographic attributes, account information, and login history did not disclose those fields because they are absent from the MCP person projection. A request to create and assign a project was declined because no write-capable tool exists. Retrieval of a plausible but non-existent activity identifier returned a safe not-found error with a request identifier, after which the client refrained from inventing the requested record. An expertise search with no matches was reported as an absence of documented evidence rather than evidence that the expertise could not exist.
+
+The demonstration also illustrates why technical safeguards do not by themselves guarantee completely grounded prose. Although no protected fields or invented activity details were returned, the model occasionally added plausible explanations that were not established by the tool output, including speculation about why an activity was unavailable and an over-broad characterisation of the underlying OSIRIS data model. The allowlisted API and read-only tool surface constrained what the client could retrieve or change, but interpretation of returned evidence still requires critical review. The complete sanitised conversation, including prompts, tool names, parameters, selected tool results, and model responses, is provided as [Supplementary File S1](https://github.com/JKoblitz/BH26-OSIRIS-MCP/blob/main/claude-test.md).
+
 OAuth login was validated end to end using Keycloak, the Dockerised connector, and MCP Inspector. The final test covered authorisation-server discovery, user login, access-token introspection, MCP initialisation, tool discovery, and an authenticated activity search. Static API-key authentication was also covered by automated tests.
 
 The work constitutes a functional prototype rather than a quantitative user study. No production OSIRIS data were made available to a language model during the BioHackathon.
@@ -175,6 +184,7 @@ Additional work may include fine-grained permissions for data categories, improv
 * OSIRIS documentation: <https://wiki.osiris-app.de/>
 * OSIRIS MCP connector: <https://github.com/OSIRIS-Solutions/osiris-mcp>
 * OSIRIS MCP Python package: <https://pypi.org/project/osiris-mcp/>
+* Sanitised qualitative test transcript (Supplementary File S1): <https://github.com/JKoblitz/BH26-OSIRIS-MCP/blob/main/claude-test.md>
 * Prototype test data were synthetic and are not research data.
 
 # Acknowledgements
