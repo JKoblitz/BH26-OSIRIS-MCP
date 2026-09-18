@@ -29,7 +29,7 @@ biohackathon_url: "https://2026.biohackathon.org/"
 biohackathon_location: "Matsuyama, Japan, 2026"
 group: OSIRIS-MCP
 git_url: https://github.com/biohackathon-japan/BH26-OSIRIS-MCP
-authors_short: Koblitz & Kinjo (2026) OSIRIS MCP
+authors_short: Koblitz & Kinjo
 ---
 
 
