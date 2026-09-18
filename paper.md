@@ -71,6 +71,7 @@ The work did not aim to provide unrestricted natural-language access to the unde
 The implementation separates the existing OSIRIS PHP application from a standalone Python MCP server. OSIRIS exposes dedicated read-only HTTP routes under `/api/mcp`. The connector translates typed MCP tool calls into requests to these routes and validates the returned data before presenting it to the MCP client. It has no generic database or unrestricted proxy tool.
 
 Table: Responsibilities of the components in the OSIRIS MCP architecture.
+
 | Component | Primary responsibilities |
 | --- | --- |
 | MCP host and client | User interaction, model invocation, consent, and tool orchestration |
